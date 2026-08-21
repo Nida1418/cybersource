@@ -1,0 +1,23 @@
+# Compiled output
+target/
+build/
+*.class
+
+# IDE
+.idea/
+*.iml
+out/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Spring Boot
+application-local.properties
+*.log
+
+# Secrets - never commit these
+.env
+*.pem
+*.key
