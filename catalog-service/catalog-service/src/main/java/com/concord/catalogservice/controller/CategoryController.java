@@ -10,6 +10,8 @@ import java.util.List;
 @RequestMapping("/api/categories")
 public class CategoryController {
 
+    // CI test trigger
+
     private final CategoryService categoryService;
 
     public CategoryController(CategoryService categoryService) {
