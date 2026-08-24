@@ -1,4 +1,4 @@
-package com.concord.catalog_service;
+package com.concord.catalogservice;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
