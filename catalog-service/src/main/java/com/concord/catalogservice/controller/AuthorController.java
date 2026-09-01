@@ -30,4 +30,9 @@ public class AuthorController {
     public Author createAuthor(@RequestBody Author author) {
         return authorService.createAuthor(author);
     }
+
+    @PatchMapping("/{id}")
+    public Author updateAuthor(@PathVariable int id, @RequestBody Author author) {
+        return authorService.updateAuthor(id,author);
+    }
 }

@@ -28,5 +28,11 @@ public class AuthorService {
         return authorRepository.save(author);
     }
 
+    public Author updateAuthor(int id, Author author) {
+        Author existingAuthor = getAuthorById(id);
+        existingAuthor.setName(author.getName());
+        return authorRepository.save(existingAuthor);
+    }
+
 }
 

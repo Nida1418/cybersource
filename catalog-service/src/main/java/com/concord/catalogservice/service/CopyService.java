@@ -6,6 +6,8 @@ import com.concord.catalogservice.repository.BookRepository;
 import com.concord.catalogservice.repository.CopyRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class CopyService {
 
@@ -15,6 +17,15 @@ public class CopyService {
     public CopyService(CopyRepository copyRepository, BookRepository bookRepository) {
         this.copyRepository = copyRepository;
         this.bookRepository = bookRepository;
+    }
+
+    public List<Copy> getAllCopies() {
+        return copyRepository.findAll();
+    }
+
+    public Copy getCopyById(int id) {
+        return copyRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Copy not found: " + id));
     }
 
     public Copy createCopy(int bookId, int copyNumber, String location) {
