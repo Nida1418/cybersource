@@ -3,9 +3,11 @@ package com.concord.catalogservice.service;
 import com.concord.catalogservice.entity.Author;
 import com.concord.catalogservice.entity.Book;
 import com.concord.catalogservice.entity.Category;
+import com.concord.catalogservice.event.BookAddedEvent;
 import com.concord.catalogservice.repository.AuthorRepository;
 import com.concord.catalogservice.repository.BookRepository;
 import com.concord.catalogservice.repository.CategoryRepository;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,11 +18,13 @@ public class BookService {
     private final BookRepository bookRepository;
     private final AuthorRepository authorRepository;
     private final CategoryRepository categoryRepository;
+    private final KafkaTemplate<String, BookAddedEvent> kafkaTemplate;
 
-    public BookService(BookRepository bookRepository, AuthorRepository authorRepository, CategoryRepository categoryRepository) {
+    public BookService(BookRepository bookRepository, AuthorRepository authorRepository, CategoryRepository categoryRepository, KafkaTemplate<String, BookAddedEvent> kafkaTemplate) {
         this.bookRepository = bookRepository;
         this.authorRepository = authorRepository;
         this.categoryRepository = categoryRepository;
+        this.kafkaTemplate = kafkaTemplate;
     }
 
     public List<Book> getAllBooks() {
@@ -45,6 +49,12 @@ public class BookService {
         book.setAuthor(author);
         book.setCategory(category);
 
-        return bookRepository.save(book);
+        Book savedBook = bookRepository.save(book);
+
+        // Publish the BookAddedEvent to Kafka
+        BookAddedEvent event = new BookAddedEvent(savedBook.getId(), savedBook.getTitle(), savedBook.getIsbn());
+        kafkaTemplate.send("catalog-events",String.valueOf(savedBook.getId()),event);
+
+        return savedBook;
     }
 }
