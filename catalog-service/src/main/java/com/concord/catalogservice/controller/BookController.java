@@ -29,12 +29,6 @@ public class BookController {
 
     @PostMapping
     public Book createBook(@RequestBody BookRequest request) {
-        return bookService.createBook(
-                request.getAuthorId(),
-                request.getCategoryId(),
-                request.getTitle(),
-                request.getIsbn(),
-                request.getDescription()
-        );
+        return bookService.createBook(request);
     }
 }
