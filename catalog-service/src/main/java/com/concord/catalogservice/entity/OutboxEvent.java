@@ -25,6 +25,7 @@ public class OutboxEvent {
 
     private LocalDateTime createdAt;
 
+    
     public OutboxEvent() {
     }
 
