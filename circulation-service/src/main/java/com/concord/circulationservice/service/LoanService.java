@@ -22,40 +22,44 @@ public class LoanService {
     }
 
     public Loan borrowBook(int copyId, String userId) {
+
         boolean copyIsAvailable = !(loanRepo.existsByCopyIdAndLoanStatus(copyId, LoanStatus.ACTIVE));
-        if (copyIsAvailable) {
-            // WebClient call to Catalog Service to get the copy
-            CopyResponse copy = catalogWebClient.get()
-                    .uri("/api/copies/{id}", copyId)
-                    .retrieve()
-                    .onStatus(status -> status.value() == 404, response -> {
-                        return Mono.error(new CopyNotFoundException("Copy not found: " + copyId));
-                    })
-                    .bodyToMono(CopyResponse.class)
-                    .block();
 
-            if("BORROWED".equals(copy.getStatus())) {
-                throw new CopyAlreadyBorrowedException("Book is already borrowed");
-            } else if("AVAILABLE".equals(copy.getStatus())) {
-                // build the loan row and loanRepo.save(loan)
-                Loan loan = new Loan();
-                loan.setCopyId(copyId);
-                loan.setUserId(userId);
-                loan.setLoanStatus(LoanStatus.ACTIVE);
-                loanRepo.save(loan);
-
-                // PATCH call to Catalog Service to change status to "BORROWED"
-                catalogWebClient.patch()
-                        .uri("/api/copies/{id}/status", copyId)
-                        .bodyValue("BORROWED")
-                        .retrieve()
-                        .bodyToMono(Void.class)
-                        .block();
-            }
-
-        } else {
+        if (!copyIsAvailable) {
             throw new CopyAlreadyBorrowedException("Book is already borrowed");
         }
-        return null; // temporary, until the borrow logic is filled in
+
+
+        // WebClient call to Catalog Service to get the copy
+        CopyResponse copy = catalogWebClient.get()
+                .uri("/api/copies/{id}", copyId)
+                .retrieve()
+                .onStatus(status -> status.value() == 404, response -> {
+                    return Mono.error(new CopyNotFoundException("Copy not found: " + copyId));
+                })
+                .bodyToMono(CopyResponse.class)
+                .block();
+
+        if ("BORROWED".equals(copy.getStatus())) {
+            throw new CopyAlreadyBorrowedException("Book is already borrowed");
+        } else if ("AVAILABLE".equals(copy.getStatus())) {
+            // build the loan row and loanRepo.save(loan)
+            Loan loan = new Loan();
+            loan.setCopyId(copyId);
+            loan.setUserId(userId);
+            loan.setLoanStatus(LoanStatus.ACTIVE);
+            loanRepo.save(loan);
+
+            // PATCH call to Catalog Service to change status to "BORROWED"
+            catalogWebClient.patch()
+                    .uri("/api/copies/{id}/status", copyId)
+                    .bodyValue("BORROWED")
+                    .retrieve()
+                    .bodyToMono(Void.class)
+                    .block();
+            return loan;
+        }
+        throw new CopyAlreadyBorrowedException("Book cannot be loaned"); //if status is neither BORROWED nor AVAILABLE, throw exception
+
     }
 }

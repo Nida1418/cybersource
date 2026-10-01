@@ -1,4 +1,4 @@
-package com.concord.circulation_service;
+package com.concord.circulationservice;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
