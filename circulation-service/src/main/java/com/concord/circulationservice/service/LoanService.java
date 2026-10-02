@@ -6,9 +6,14 @@ import com.concord.circulationservice.entity.LoanStatus;
 import com.concord.circulationservice.exception.CopyAlreadyBorrowedException;
 import com.concord.circulationservice.exception.CopyNotFoundException;
 import com.concord.circulationservice.repository.LoanRepository;
+import org.springframework.http.MediaType;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+
+import java.util.Map;
 
 @Service
 public class LoanService {
@@ -29,10 +34,13 @@ public class LoanService {
             throw new CopyAlreadyBorrowedException("Book is already borrowed");
         }
 
+        Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getCredentials();
+        String token = jwt.getTokenValue();
 
         // WebClient call to Catalog Service to get the copy
         CopyResponse copy = catalogWebClient.get()
                 .uri("/api/copies/{id}", copyId)
+                .header("Authorization", "Bearer " + token)
                 .retrieve()
                 .onStatus(status -> status.value() == 404, response -> {
                     return Mono.error(new CopyNotFoundException("Copy not found: " + copyId));
@@ -53,7 +61,9 @@ public class LoanService {
             // PATCH call to Catalog Service to change status to "BORROWED"
             catalogWebClient.patch()
                     .uri("/api/copies/{id}/status", copyId)
-                    .bodyValue("BORROWED")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header("Authorization", "Bearer " + token)
+                    .bodyValue(Map.of("status", "BORROWED"))
                     .retrieve()
                     .bodyToMono(Void.class)
                     .block();
