@@ -17,4 +17,14 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleCopyNotFoundException(CopyNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
     }
+
+    @ExceptionHandler(BorrowFailedException.class)
+    public ResponseEntity<String> handleBorrowFailedException(BorrowFailedException ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ex.getMessage());
+}
+
+    @ExceptionHandler(CatalogServiceUnavailableException.class)
+    public ResponseEntity<String> handleCatalogServiceUnavailableException(CatalogServiceUnavailableException ex) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(ex.getMessage());
+    }
 }
