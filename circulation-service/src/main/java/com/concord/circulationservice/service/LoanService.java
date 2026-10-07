@@ -8,6 +8,9 @@ import com.concord.circulationservice.exception.CatalogServiceUnavailableExcepti
 import com.concord.circulationservice.exception.CopyAlreadyBorrowedException;
 import com.concord.circulationservice.exception.CopyNotFoundException;
 import com.concord.circulationservice.repository.LoanRepository;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -40,6 +43,29 @@ public class LoanService {
         String token = jwt.getTokenValue();
         CopyResponse copy = new CopyResponse();
 
+        copy = getCopyFromCatalogService(copyId, token);
+
+        if ("BORROWED".equals(copy.getStatus())) {
+            throw new CopyAlreadyBorrowedException("Book is already borrowed");
+        } else if ("AVAILABLE".equals(copy.getStatus())) {
+            // build the loan row and loanRepo.save(loan)
+            Loan loan = new Loan();
+            loan.setCopyId(copyId);
+            loan.setUserId(userId);
+            loan.setLoanStatus(LoanStatus.ACTIVE);
+            loanRepo.save(loan);
+
+            updateCatalogService(copyId, token, loan);
+
+            return loan;
+        }
+        throw new CopyAlreadyBorrowedException("Book cannot be loaned"); //if status is neither BORROWED nor AVAILABLE, throw exception
+
+    }
+
+    @CircuitBreaker(name = "catalogService", fallbackMethod = "getCopyFromCatalogServiceFallback")
+    public CopyResponse getCopyFromCatalogService(int copyId, String token) {
+        CopyResponse copy = new CopyResponse();
         try{
             // WebClient call to Catalog Service to get the copy
             copy = catalogWebClient.get()
@@ -58,37 +84,35 @@ public class LoanService {
         catch (Exception e) {
             throw new CatalogServiceUnavailableException("Catalog Service is unavailable", e);
         }
+        return copy;
+    }
 
+    public CopyResponse getCopyFromCatalogServiceFallback(int copyId, String token, Throwable t) {
+        throw new CatalogServiceUnavailableException("Catalog Service is unavailable", t);
+    }
 
-        if ("BORROWED".equals(copy.getStatus())) {
-            throw new CopyAlreadyBorrowedException("Book is already borrowed");
-        } else if ("AVAILABLE".equals(copy.getStatus())) {
-            // build the loan row and loanRepo.save(loan)
-            Loan loan = new Loan();
-            loan.setCopyId(copyId);
-            loan.setUserId(userId);
-            loan.setLoanStatus(LoanStatus.ACTIVE);
+    @CircuitBreaker(name = "catalogService", fallbackMethod = "updateCatalogServiceFallback")
+    public void updateCatalogService(int copyId, String token, Loan loan) {
+        try{
+            // PATCH call to Catalog Service to change status to "BORROWED"
+            catalogWebClient.patch()
+                    .uri("/api/copies/{id}/status", copyId)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header("Authorization", "Bearer " + token)
+                    .bodyValue(Map.of("status", "BORROWED"))
+                    .retrieve()
+                    .bodyToMono(Void.class)
+                    .block();
+        } catch(Exception e) {
+            loan.setLoanStatus(LoanStatus.CANCELLED);
             loanRepo.save(loan);
-
-            try{
-                // PATCH call to Catalog Service to change status to "BORROWED"
-                catalogWebClient.patch()
-                        .uri("/api/copies/{id}/status", copyId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token)
-                        .bodyValue(Map.of("status", "BORROWED"))
-                        .retrieve()
-                        .bodyToMono(Void.class)
-                        .block();
-            } catch(Exception e) {
-                loan.setLoanStatus(LoanStatus.CANCELLED);
-                loanRepo.save(loan);
-                throw new BorrowFailedException("Error occurred while borrowing book",e);
-            }
-
-            return loan;
+            throw new BorrowFailedException("Error occurred while borrowing book",e);
         }
-        throw new CopyAlreadyBorrowedException("Book cannot be loaned"); //if status is neither BORROWED nor AVAILABLE, throw exception
+    }
 
+    public void updateCatalogServiceFallback(int copyId, String token, Loan loan, Throwable t) {
+        loan.setLoanStatus(LoanStatus.CANCELLED);
+        loanRepo.save(loan);
+        throw new CatalogServiceUnavailableException("Catalog Service is unavailable", t);
     }
 }
