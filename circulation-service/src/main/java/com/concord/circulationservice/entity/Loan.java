@@ -23,6 +23,10 @@ public class Loan {
 
     private LocalDate returnDate;
 
+    private Double fineAmount;
+
+    private String fineStatus;
+
     public int getId() {
         return id;
     }
@@ -77,5 +81,21 @@ public class Loan {
 
     public void setLoanStatus(LoanStatus loanStatus) {
         this.loanStatus = loanStatus;
+    }
+
+    public Double getFineAmount() {
+        return fineAmount;
+    }
+
+    public void setFineAmount(Double fineAmount) {
+        this.fineAmount = fineAmount;
+    }
+
+    public String getFineStatus() {
+        return fineStatus;
+    }
+
+    public void setFineStatus(String fineStatus) {
+        this.fineStatus = fineStatus;
     }
 }
