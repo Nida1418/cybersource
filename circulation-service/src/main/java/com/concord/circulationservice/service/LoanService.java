@@ -9,11 +9,10 @@ import com.concord.circulationservice.event.FineGeneratedEvent;
 import com.concord.circulationservice.exception.CopyAlreadyBorrowedException;
 import com.concord.circulationservice.repository.LoanRepository;
 import com.concord.circulationservice.repository.OutboxEventRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
-import tools.jackson.databind.ObjectMapper;
+
 
 import java.time.LocalDate;
 
@@ -31,14 +30,11 @@ public class LoanService {
         this.outboxRepo = outboxRepo;
     }
 
-    public Loan borrowBook(int copyId, String userId) {
+    public Loan borrowBook(int copyId, String userId,String token) {
         boolean copyIsAvailable = !(loanRepo.existsByCopyIdAndLoanStatus(copyId, LoanStatus.ACTIVE));
         if (!copyIsAvailable) {
             throw new CopyAlreadyBorrowedException("Book is already borrowed");
         }
-
-        Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getCredentials();
-        String token = jwt.getTokenValue();
 
         CopyResponse copy = catalogClient.getCopyFromCatalogService(copyId, token);
 
@@ -61,7 +57,7 @@ public class LoanService {
     }
 
     @Transactional
-    public Loan returnBook(int copyId, String userId) {
+    public Loan returnBook(int copyId, String userId, String token) {
         Loan loan = loanRepo.findByCopyIdAndLoanStatus(copyId, LoanStatus.ACTIVE)
                 .orElseThrow(() -> new RuntimeException("No active loan found for this copy and user"));
 
@@ -97,11 +93,6 @@ public class LoanService {
         }
 
         loanRepo.save(loan);
-
-
-
-        Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getCredentials();
-        String token = jwt.getTokenValue();
 
         catalogClient.updateCatalogServiceForReturn(copyId, token, loan);
 

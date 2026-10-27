@@ -2,6 +2,8 @@ package com.concord.circulationservice.entity;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "outbox_event")
 public class OutboxEvent {
@@ -20,6 +22,8 @@ public class OutboxEvent {
     private OutboxStatus status;
     // e.g. "circulation-events"
 
+    private LocalDateTime createdAt;
+
     public OutboxEvent() {
     }
 
@@ -31,6 +35,7 @@ public class OutboxEvent {
         this.payload = payload;
         this.topic = topic;
         this.status = OutboxStatus.PENDING;
+        this.createdAt = LocalDateTime.now();
     }
 
     // Getters and setters
@@ -89,5 +94,13 @@ public class OutboxEvent {
 
     public void setStatus(OutboxStatus status) {
         this.status = status;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }
