@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -137,6 +138,7 @@ class LoanServiceTest {
         loan.setLoanStatus(LoanStatus.RETURNED);
         loan.setFineAmount(fineAmount);
         loan.setFineStatus("PENDING");
+        loan.setDueDate(LocalDate.now().minusDays(5)); // overdue, forces the fine/outbox branch to execute
 
         when(loanRepo.findByCopyIdAndLoanStatus(copyId, LoanStatus.ACTIVE)).thenReturn(Optional.of(loan));
 
@@ -148,8 +150,7 @@ class LoanServiceTest {
                 payload,
                 "circulation-events"
         );
-
-        when(loanRepo.save(any(Loan.class))).thenReturn(loan);
+        
         when(outboxRepo.save(any(OutboxEvent.class))).thenThrow(new RuntimeException("Failed to serialize outbox event"));
 
         // Act & Assert
@@ -167,6 +168,7 @@ class LoanServiceTest {
         loan.setUserId(userId);
         loan.setCopyId(copyId);
         loan.setLoanStatus(LoanStatus.ACTIVE);
+        loan.setDueDate(LocalDate.now().plusDays(5)); // due in the future, no fine triggered
 
         when(loanRepo.findByCopyIdAndLoanStatus(copyId, LoanStatus.ACTIVE)).thenReturn(Optional.of(loan));
         when(loanRepo.save(any(Loan.class))).thenReturn(loan);
@@ -178,8 +180,6 @@ class LoanServiceTest {
         assertNotNull(result);
         assertEquals(LoanStatus.RETURNED, result.getLoanStatus());
         verify(loanRepo).save(any(Loan.class));
-
-
 
     }
 }
