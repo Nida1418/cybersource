@@ -14,6 +14,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Service
@@ -71,13 +72,14 @@ public class LoanService {
         //calculate fine if returned after due date
         if (loan.getReturnDate().isAfter(loan.getDueDate())) {
             long daysLate = loan.getReturnDate().toEpochDay() - loan.getDueDate().toEpochDay();
-            double fineAmount = daysLate * 1.0; // Assuming $1 fine per day late
+            BigDecimal fineAmount = BigDecimal.valueOf(daysLate).multiply(BigDecimal.valueOf(1.0)); // Assuming $1 fine per day late
             loan.setFineAmount(fineAmount);
             loan.setFineStatus("PENDING");
+            loan.setCurrency("AUD");
 
             // Here you would typically publish the event to a message broker or event bus
             try {
-                String payload = objectMapper.writeValueAsString(new FineGeneratedEvent(loan.getId(), fineAmount, loan.getFineStatus()));
+                String payload = objectMapper.writeValueAsString(new FineGeneratedEvent(loan.getId(), fineAmount, loan.getFineStatus(), loan.getUserId(), loan.getCurrency()));
 
                 OutboxEvent outboxEvent = new OutboxEvent(
                         "Loan",

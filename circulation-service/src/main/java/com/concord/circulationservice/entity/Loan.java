@@ -1,6 +1,8 @@
 package com.concord.circulationservice.entity;
 
 import jakarta.persistence.*;
+
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
@@ -23,9 +25,10 @@ public class Loan {
 
     private LocalDate returnDate;
 
-    private Double fineAmount;
+    private BigDecimal fineAmount;
 
     private String fineStatus;
+    private String currency;
 
     public int getId() {
         return id;
@@ -83,11 +86,11 @@ public class Loan {
         this.loanStatus = loanStatus;
     }
 
-    public Double getFineAmount() {
+    public BigDecimal getFineAmount() {
         return fineAmount;
     }
 
-    public void setFineAmount(Double fineAmount) {
+    public void setFineAmount(BigDecimal fineAmount) {
         this.fineAmount = fineAmount;
     }
 
@@ -97,5 +100,13 @@ public class Loan {
 
     public void setFineStatus(String fineStatus) {
         this.fineStatus = fineStatus;
+    }
+
+    public String getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(String currency) {
+        this.currency = currency;
     }
 }

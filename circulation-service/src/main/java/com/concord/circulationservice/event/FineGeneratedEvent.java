@@ -1,18 +1,24 @@
 package com.concord.circulationservice.event;
 
+import java.math.BigDecimal;
+
 public class FineGeneratedEvent {
 
     private int loanId;
-    private double fineAmount;
+    private BigDecimal fineAmount;
     private String fineStatus;
+    private String userId;
+    private String currency;
 
     public FineGeneratedEvent() {
     }
 
-    public FineGeneratedEvent(int loanId, double fineAmount, String fineStatus) {
+    public FineGeneratedEvent(int loanId, BigDecimal fineAmount, String fineStatus, String userId, String currency) {
         this.loanId = loanId;
         this.fineAmount = fineAmount;
         this.fineStatus = fineStatus;
+        this.userId = userId;
+        this.currency = currency;
     }
 
     public int getLoanId() {
@@ -23,11 +29,11 @@ public class FineGeneratedEvent {
         this.loanId = loanId;
     }
 
-    public double getFineAmount() {
+    public BigDecimal getFineAmount() {
         return fineAmount;
     }
 
-    public void setFineAmount(double fineAmount) {
+    public void setFineAmount(BigDecimal fineAmount) {
         this.fineAmount = fineAmount;
     }
 
@@ -37,5 +43,21 @@ public class FineGeneratedEvent {
 
     public void setFineStatus(String fineStatus) {
         this.fineStatus = fineStatus;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public String getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(String currency) {
+        this.currency = currency;
     }
 }

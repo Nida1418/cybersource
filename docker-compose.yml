@@ -47,6 +47,9 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_log:/var/lib/zookeeper/log
 
   kafka:
     image: confluentinc/cp-kafka:7.6.0
@@ -61,14 +64,21 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    volumes:
+      - kafka_data:/var/lib/kafka/data
 
   redis:
     image: redis:7
     container_name: concord-redis
     ports:
     - "6379:6379"
+    volumes:
+      - redis_data:/var/lib/redis
 
 volumes:
   postgres_data:
   keycloak_postgres_data:
+  kafka_data:
   redis_data:
+  zookeeper_data:
+  zookeeper_log:

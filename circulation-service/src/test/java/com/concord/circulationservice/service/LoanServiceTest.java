@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Optional;
 
@@ -129,7 +130,7 @@ class LoanServiceTest {
         int copyId = 1;
         String userId = "user123";
         String token = "mockedToken";
-        double fineAmount = 5.0; // Example fine amount
+        BigDecimal fineAmount = BigDecimal.valueOf(5.0); // Example fine amount
 
 
         Loan loan = new Loan();
@@ -150,7 +151,7 @@ class LoanServiceTest {
                 payload,
                 "circulation-events"
         );
-        
+
         when(outboxRepo.save(any(OutboxEvent.class))).thenThrow(new RuntimeException("Failed to serialize outbox event"));
 
         // Act & Assert
